@@ -1,0 +1,3 @@
+[submodule "ParsleyHaskell"]
+	path = ParsleyHaskell
+	url = https://github.com/j-mie6/ParsleyHaskell

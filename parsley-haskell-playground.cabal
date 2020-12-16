@@ -1,0 +1,23 @@
+cabal-version:       >=1.10
+name:                parsley-haskell-playground
+version:             0.1.0.0
+license-file:        LICENSE
+author:              Jamie Willis
+maintainer:          j.willis19@imperial.ac.uk
+build-type:          Simple
+
+executable parsley-haskell-playground
+  build-depends:       base >=4.10 && <5,
+                       parsley,
+                       dump-core,
+                       lift-plugin,
+                       template-haskell,
+                       text,
+                       bytestring,
+                       containers
+  other-modules:       Parsers
+  other-extensions:    TemplateHaskell
+  hs-source-dirs:      src
+  main-is:             Playground.hs
+  default-language:    Haskell2010
+  ghc-options:         -rtsopts -fplugin=LiftPlugin -fno-spec-constr -fplugin=DumpCore

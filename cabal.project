@@ -1,0 +1,15 @@
+packages:.
+         ParsleyHaskell
+optimization:2
+profiling-detail:none
+
+source-repository-package
+    type: git
+    location: https://github.com/J-mie6/lift-plugin.git
+    subdir: lift-plugin
+    tag: e7bf0b4ee361a17c55170ce234a5542544625991
+
+source-repository-package
+    type: git
+    location: https://github.com/J-mie6/idioms-plugins.git
+    tag: 1ca37d047d5c8568bee6caf5a506995cd53265f5
