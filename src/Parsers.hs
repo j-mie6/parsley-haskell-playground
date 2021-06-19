@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveLift #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE PatternSynonyms #-}
 module Parsers where
 
 import Prelude hiding (fmap, pure, (<*), (*>), (<*>), (<$>), (<$), pred, repeat)
@@ -9,11 +10,13 @@ import Parsley
 import Parsley.Combinator (noneOf)
 import Parsley.Fold (skipMany)
 import Parsley.Register (Reg, get, put, newRegister, newRegister_, gets_, modify, local, modify_, bind)
+import Parsley.Defunctionalized (Defunc(..), pattern UNIT)
 import Control.Monad (liftM)
 import Data.Char (isAlpha, isAlphaNum, isSpace, isUpper, isDigit, digitToInt, chr, ord)
 import Data.Set (fromList, member)
 import Data.Maybe (catMaybes)
 import Text.Read (readMaybe)
+import Language.Haskell.TH.Syntax (Lift)
 
 import qualified Prelude
 
@@ -34,13 +37,13 @@ cinput = m --try (string "aaa") <|> string "db" --(string "aab" <|> string "aac"
     op '>' = string ">"
 
 regTest :: Parser Int
-regTest = newRegister_ (code 7) (\r -> modify_ r (makeQ (succ @Int) [||succ @Int||]) *> (let g = get r in g *> g))
+regTest = newRegister_ [|7|] (\r -> modify_ r [|succ @Int|] *> (let g = get r in g *> g))
 
 defuncTest :: Parser (Maybe Int)
-defuncTest = code Just <$> (code (+) <$> (item $> code 1) <*> (item $> code 8))
+defuncTest = [|Just|] <$> ([|(+)|] <$> (item $> [|1|]) <*> (item $> [|8|]))
 
 manyTest :: Parser [Char]
-manyTest = many (try (string "ab") $> (code 'c'))
+manyTest = many (try (string "ab") $> [|'c'|])
 
 nfb :: Parser ()
 nfb = notFollowedBy (char 'a') <|> void (string "ab")
@@ -62,13 +65,13 @@ brainfuck = whitespace *> bf
     whitespace = skipMany (noneOf "<>+-[],.$")
     lexeme p = p <* whitespace
     bf = many (lexeme (match "><+-.,[" (lookAhead item) op empty))
-    op '>' = item $> code RightPointer
-    op '<' = item $> code LeftPointer
-    op '+' = item $> code Increment
-    op '-' = item $> code Decrement
-    op '.' = item $> code Output
-    op ',' = item $> code Input
-    op '[' = between (lexeme item) (char ']') (code Loop <$> bf)
+    op '>' = item $> [|RightPointer|]
+    op '<' = item $> [|LeftPointer|]
+    op '+' = item $> [|Increment|]
+    op '-' = item $> [|Decrement|]
+    op '.' = item $> [|Output|]
+    op ',' = item $> [|Input|]
+    op '[' = between (lexeme item) (char ']') ([|Loop|] <$> bf)
 
 data Tape = Tape [Int] Int [Int]
 
@@ -104,33 +107,33 @@ evalBf loader =
     delim *> newRegister_ (makeQ emptyTape [||emptyTape||]) (\tape ->
       newRegister_ EMPTY $ \out ->
            eval instrs tape out
-        *> gets_ out (code reverse))
+        *> gets_ out [|reverse|])
   where
     delim :: Parser Char
     delim = char '$'
 
     eval :: Reg r1 [BrainFuckOp] -> Reg r2 Tape -> Reg r3 [Char] -> Parser ()
     eval instrs tape out =
-      let go = predicate (code null) (get instrs) unit $
-            bind (gets_ instrs (code head)) $ \op ->
+      let go = predicate [|null|] (get instrs) unit $
+            bind (gets_ instrs [|head|]) $ \op ->
               let evalLoop =
-                    predicate (EQ_H (code 0)) read
+                    predicate (EQ_H [|0|]) read
                       unit
-                      (local instrs (code getLoop <$> op) go *> evalLoop)
-              in modify_ instrs (code tail)
-              *> predicate (code isLoop) op
+                      (local instrs ([|getLoop|] <$> op) go *> evalLoop)
+              in modify_ instrs [|tail|]
+              *> predicate [|isLoop|] op
                    evalLoop
                    (match [RightPointer, LeftPointer, Increment, Decrement, Output, Input] op evalOp' empty)
               *> go
       in go
       where
         evalOp' :: BrainFuckOp -> Parser ()
-        evalOp' RightPointer = move (code right)
-        evalOp' LeftPointer  = move (code left)
-        evalOp' Increment    = update (code inc)
-        evalOp' Decrement    = update (code dec)
-        evalOp' Output       = print (code toChar <$> read)
-        evalOp' Input        = write (code toInt <$> item)
+        evalOp' RightPointer = move [|right|]
+        evalOp' LeftPointer  = move [|left|]
+        evalOp' Increment    = update [|inc|]
+        evalOp' Decrement    = update [|dec|]
+        evalOp' Output       = print ([|toChar|] <$> read)
+        evalOp' Input        = write ([|toInt|] <$> item)
 
         -- Operations
         move :: Defunc (Tape -> Tape) -> Parser ()
@@ -138,8 +141,8 @@ evalBf loader =
         print :: Parser Char -> Parser ()
         print x = modify out (CONS <$> x)
         read :: Parser Int
-        read = gets_ tape (code readTape)
+        read = gets_ tape [|readTape|]
         write :: Parser Int -> Parser ()
-        write px = modify tape (code writeTape <$> px)
+        write px = modify tape ([|writeTape|] <$> px)
         update :: Defunc (Int -> Int) -> Parser ()
         update f = write (f <$> read)
