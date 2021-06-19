@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -ddump-splices -ddump-to-file #-}
 {-# LANGUAGE TemplateHaskell,
              ScopedTypeVariables,
              StandaloneDeriving,
@@ -51,12 +52,6 @@ evalBf prog = go (Tape (repeat 0) 0 (repeat 0)) prog >> return ()
     write :: a -> Tape a -> Tape a
     write x (Tape ls _ rs) = Tape ls x rs
 
---javascript :: String -> IO (Maybe Parsers.JSProgram)
---javascript = const (return Nothing)-- $$(Parsley.parseFromFile Parsers.javascript)
-
-defuncTest :: String -> Maybe (Maybe Int)
-defuncTest = const Nothing -- $$(Parsley.runParser Parsers.defuncTest)
-
 manyTest :: String -> Maybe String
 manyTest = $$(Parsley.runParser Parsers.manyTest)
 
@@ -82,11 +77,7 @@ main =
      print (nfb "a")
      print (nfb "ab")
      print (nfb "c")-}
-  do --javascript "inputs/fibonacci.js" >>= print
-     --javascript "inputs/heapsort.js" >>= print
-     --javascript "inputs/game.js" >>= print
-     --javascript "inputs/big.js" >>= print
-     print (manyTest "")
+  do print (manyTest "")
      print (manyTest "ab")
      print (manyTest "abab")
      print (manyTest "ababc")
