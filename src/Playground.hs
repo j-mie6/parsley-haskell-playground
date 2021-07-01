@@ -10,7 +10,8 @@
              FlexibleContexts,
              NumericUnderscores,
              UnboxedTuples,
-             NoMonomorphismRestriction #-}
+             NoMonomorphismRestriction,
+             TypeApplications #-}
 module Main where
 import Parsers (BrainFuckOp(..))
 import qualified Parsers
